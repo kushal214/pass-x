@@ -1,96 +1,121 @@
-function maskPassword(pass){
-    let str = ""
-    for (let index = 0; index < pass.length; index++) {
-        str  += "*"
-    }
-    return str
+function maskPassword(pass) {
+    return '*'.repeat(pass.length);
 }
 
 function copyText(txt) {
     navigator.clipboard.writeText(txt).then(
         () => {
-          
-          document.getElementById("alert").style.display = "inline"
-          setTimeout(() => {
-            document.getElementById("alert").style.display = "none"
-          }, 2000);
-
+            document.getElementById("alert").style.display = "inline";
+            setTimeout(() => {
+                document.getElementById("alert").style.display = "none";
+            }, 2000);
         },
         () => {
-          
-          alert("Clipboard copying failed")
-        },
-      );
-  }
-
-const deletePassword = (website)=>{
-    let data = localStorage.getItem("passwords")
-    let arr = JSON.parse(data);
-    arrUpdated = arr.filter((e)=>{
-        return e.website != website
-    })
-    localStorage.setItem("passwords", JSON.stringify(arrUpdated))
-    alert(`Successfully deleted ${website}'s password`)
-    showPasswords()
-
+            alert("Clipboard copying failed");
+        }
+    );
 }
 
+const deletePassword = (website) => {
+    let data = localStorage.getItem("passwords");
+    let arr = JSON.parse(data) || [];
+    let arrUpdated = arr.filter((e) => e.website !== website);
+    localStorage.setItem("passwords", JSON.stringify(arrUpdated));
+    alert(`Successfully deleted ${website}'s password`);
+    showPasswords();
+};
 
 const showPasswords = () => {
-    let tb = document.querySelector("table")
-    let data = localStorage.getItem("passwords")
-    if (data == null || JSON.parse(data).length == 0) {
-        tb.innerHTML = "No Data To Show"
+    let tb = document.querySelector("table");
+    let data = localStorage.getItem("passwords");
+
+    if (!data) {
+        tb.innerHTML = `<tr>
+            <th>Website</th>
+            <th>Username</th>
+            <th>Password</th>
+            <th>Delete</th>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align:center; padding: 10px; font-style: italic; color: gray;">
+                No saved data yet
+            </td>
+        </tr>`;
+        return;
     }
-    else {
-        tb.innerHTML =  `<tr>
+
+    let arr = JSON.parse(data);
+
+    
+    arr = arr.filter(entry =>
+        entry &&
+        entry.website && entry.website.trim() !== "" &&
+        entry.username && entry.password
+    );
+
+    if (arr.length === 0) {
+        tb.innerHTML = `<tr>
+            <th>Website</th>
+            <th>Username</th>
+            <th>Password</th>
+            <th>Delete</th>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align:center; padding: 10px; font-style: italic; color: gray;">
+                No saved data yet
+            </td>
+        </tr>`;
+        return;
+    }
+
+    let str = `<tr>
         <th>Website</th>
         <th>Username</th>
         <th>Password</th>
         <th>Delete</th>
-    </tr> `
-        let arr = JSON.parse(data);
-        let str = ""
-        for (let index = 0; index < arr.length; index++) {
-            const element = arr[index];
+    </tr>`;
 
-            str += `<tr>
-    <td>${element.website} <img onclick="copyText('${element.website}')" src="./copy.svg" alt="Copy Button" width="10" width="10" height="10">
-    </td>
-    <td>${element.username} <img onclick="copyText('${element.username}')" src="./copy.svg" alt="Copy Button" width="10" width="10" height="10">
-    </td>
-    <td>${maskPassword(element.password)} <img onclick="copyText('${element.password}')" src="./copy.svg" alt="Copy Button" width="10" width="10" height="10">
-    </td>
-    <td><button class="btnsm" onclick="deletePassword('${element.website}')">Delete</button></td>
-        </tr>`
-        }
-        tb.innerHTML = tb.innerHTML + str
+    arr.forEach(element => {
+        str += `<tr>
+            <td>${element.website} <i class="fa-solid fa-copy" onclick="copyText('${element.website}')" style="cursor:pointer; margin-left:8px;"></i></td>
+            <td>${element.username} <i class="fa-solid fa-copy" onclick="copyText('${element.username}')" style="cursor:pointer; margin-left:8px;"></i></td>
+            <td>${maskPassword(element.password)} <i class="fa-solid fa-copy" onclick="copyText('${element.password}')" style="cursor:pointer; margin-left:8px;"></i></td>
+            <td><button class="btnsm" onclick="deletePassword('${element.website}')"><i class="fa-solid fa-trash"></i></button></td>
+        </tr>`;
+    });
 
-    }
-    website.value = ""
-    username.value = ""
-    password.value = ""
-}
+    tb.innerHTML = str;
+
+    website.value = "";
+    username.value = "";
+    password.value = "";
+};
 
 console.log("Working");
-showPasswords()
+showPasswords();
+
 document.querySelector(".btn").addEventListener("click", (e) => {
-    e.preventDefault()
-    console.log("Clicked....")
-    console.log(username.value, password.value)
-    let passwords = localStorage.getItem("passwords")
-    console.log(passwords)
-    if (passwords == null) {
-        let json = []
-        json.push({website: website.value, username: username.value, password: password.value })
-        alert("Password Saved");
-        localStorage.setItem("passwords", JSON.stringify(json))
+    e.preventDefault();
+
+    let websiteVal = website.value.trim();
+    let usernameVal = username.value.trim();
+    let passwordVal = password.value.trim();
+
+    if (!websiteVal || !usernameVal || !passwordVal) {
+        alert("Please fill all fields!");
+        return;
     }
-    else {
-        let json = JSON.parse(localStorage.getItem("passwords"))
-        json.push({ website: website.value, username: username.value, password: password.value })
-        alert("Password Saved");
-        localStorage.setItem("passwords", JSON.stringify(json))
-    }
-    showPasswords()
-})
+
+    let passwords = localStorage.getItem("passwords");
+    let json = passwords ? JSON.parse(passwords) : [];
+
+    json.push({
+        website: websiteVal,
+        username: usernameVal,
+        password: passwordVal
+    });
+
+    alert("Password Saved");
+    localStorage.setItem("passwords", JSON.stringify(json));
+    showPasswords();
+});
